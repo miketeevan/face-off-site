@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FaceOff - League of Faces</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+    header { background: #333; color: white; padding: 10px; text-align: center; font-size: 24px; }
+    #main { display: flex; flex: 1; overflow: hidden; }
+    #photo-section { flex: 3; padding: 20px; text-align: center; overflow-y: auto; }
+    #photo-section img { width: 300px; height: auto; border-radius: 10px; margin-bottom: 20px; }
+    #league-table { flex: 1; background: #f4f4f4; padding: 20px; border-left: 2px solid #ccc; overflow-y: auto; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 10px 0; border-bottom: 1px solid #ccc; }
+    button { margin-top: 10px; padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; }
+    select, input[type="file"] { margin-top: 10px; padding: 5px; }
+    #auth { background: rgba(0,0,0,0.7); color: white; position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+    #auth input { margin: 5px; padding: 8px; width: 200px; }
+  </style>
+</head>
+<body>
+
+<header>FaceOff</header>
+
+<div id="auth">
+  <h2>Login or Register</h2>
+  <input type="text" id="username-input" placeholder="Username">
+  <button onclick="login()">Enter</button>
+</div>
+
+<div id="main" style="display: none;">
+  <div id="photo-section">
+    <input type="file" id="upload-photo" accept="image/*" onchange="previewPhoto()"><br><br>
+    <img id="profile-photo" src="https://via.placeholder.com/300x400.png?text=Laura" alt="User Photo">
+    <h2 id="username">Laura25</h2>
+    <p>Average Score: <span id="average-score">9.8</span></p>
+
+    <div id="rating">
+      <label>Rate this photo:</label><br>
+      <select id="rating-select">
+        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+      </select><br>
+      <button onclick="submitRating()">Submit Rating</button>
+    </div>
+
+    <br><br>
+    <button onclick="loadNextUser()">Next User</button>
+  </div>
+
+  <aside id="league-table">
+    <h3>Top Rated</h3>
+    <ul id="league-list"></ul>
+  </aside>
+</div>
+
+<script>
+  let users = [
+    { username: "Laura25", avgScore: 9.8, totalScore: 49, ratings: 5, photo: "https://via.placeholder.com/300x400.png?text=Laura" },
+    { username: "Mark22", avgScore: 9.5, totalScore: 38, ratings: 4, photo: "https://via.placeholder.com/300x400.png?text=Mark" },
+    { username: "SophieM", avgScore: 9.3, totalScore: 28, ratings: 3, photo: "https://via.placeholder.com/300x400.png?text=Sophie" },
+  ];
+  let currentIndex = 0;
+  let currentUser = "";
+
+  function login() {
+    const username = document.getElementById('username-input').value.trim();
+    if (username.length === 0) {
+      alert("Please enter a username");
+      return;
+    }
+    currentUser = username;
+    users.push({ username: username, avgScore: 0, totalScore: 0, ratings: 0, photo: "https://via.placeholder.com/300x400.png?text=" + username });
+    document.getElementById('auth').style.display = "none";
+    document.getElementById('main').style.display = "flex";
+    loadUser(0);
+    updateLeague();
+  }
+
+  function loadUser(index) {
+    currentIndex = index;
+    const user = users[currentIndex];
+    document.getElementById('profile-photo').src = user.photo;
+    document.getElementById('username').innerText = user.username;
+    document.getElementById('average-score').innerText = user.avgScore.toFixed(1);
+  }
+
+  function loadNextUser() {
+    currentIndex = (currentIndex + 1) % users.length;
+    loadUser(currentIndex);
+  }
+
+  function submitRating() {
+    const score = parseInt(document.getElementById('rating-select').value);
+    const user = users[currentIndex];
+    if (user.username === currentUser) {
+      alert("You can't rate yourself!");
+      return;
+    }
+    user.totalScore += score;
+    user.ratings += 1;
+    user.avgScore = user.totalScore / user.ratings;
+    alert("Thanks for rating!");
+    updateLeague();
+    loadNextUser();
+  }
+
+  function updateLeague() {
+    users.sort((a, b) => b.avgScore - a.avgScore);
+    const list = document.getElementById('league-list');
+    list.innerHTML = "";
+    users.forEach((u, i) => {
+      const li = document.createElement('li');
+      li.textContent = `${i+1}. ${u.username} - ${u.avgScore.toFixed(1)}`;
+      list.appendChild(li);
+    });
+  }
+
+  function previewPhoto() {
+    const file = document.getElementById('upload-photo').files[0];
+    const reader = new FileReader();
+    reader.onloadend = function() {
+      users.find(u => u.username === currentUser).photo = reader.result;
+      loadUser(users.findIndex(u => u.username === currentUser));
+    }
+    if (file) {
+      reader.readAsDataURL(file);
+    }
+  }
+</script>
+
+</body>
+</html>
